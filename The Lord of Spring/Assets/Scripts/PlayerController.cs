@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent (typeof (Rigidbody2D))]
+[RequireComponent (typeof (SpriteRenderer))]
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float _moveSpeed = 5.0f;
@@ -11,20 +12,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask _dashLayerMask;
 
     private Rigidbody2D _rigidbody2D = null;
+    private SpriteRenderer _spriteRenderer = null;
     private Vector2 _moveDir = Vector2.zero;
     private Vector2 _velocity = Vector2.zero;
     private Vector3 _target = Vector3.zero;
 
     private bool _canDash;
+    private bool _facingRight;
 
     private void Awake()
     {
         _rigidbody2D = GetComponent<Rigidbody2D>();
-
-        if (_rigidbody2D == null)
-        {
-            Debug.LogErrorFormat("[PlayerMovement.cs] There needs to be a Rigidbody2D component attached to {0}", gameObject.name);
-        }
+        _spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     private void Update()
@@ -55,10 +54,24 @@ public class PlayerController : MonoBehaviour
             _moveDir.y = 1;
         if (Input.GetKey(GameController.Instance.MoveDown))
             _moveDir.y = -1;
+
         if (Input.GetKey(GameController.Instance.MoveLeft))
+        {
             _moveDir.x = -1;
+
+            if (!_facingRight)
+            {
+                Flip();
+            }
+        }
         if (Input.GetKey(GameController.Instance.MoveRight))
+        {
             _moveDir.x = 1;
+            if (_facingRight)
+            {
+                Flip();
+            }
+        }
 
         if (Input.GetKeyDown(GameController.Instance.Dash))
         {
@@ -83,5 +96,14 @@ public class PlayerController : MonoBehaviour
 
         _rigidbody2D.MovePosition(dashPosition);
         _canDash = false;
+    }
+
+    private void Flip ()
+    {
+        _facingRight = !_facingRight;
+
+        var localScale = transform.localScale;
+        localScale.x *= -1;
+        transform.localScale = localScale;
     }
 }
