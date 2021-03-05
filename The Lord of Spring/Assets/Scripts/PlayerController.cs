@@ -2,108 +2,85 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent (typeof (Rigidbody2D))]
-[RequireComponent (typeof (SpriteRenderer))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : CharacterController2D
 {
-    [SerializeField] private float _moveSpeed = 5.0f;
-    [SerializeField] private GameObject _crosshair = null;
-    [SerializeField] private float _dashAmount = 50.0f;
-    [SerializeField] private LayerMask _dashLayerMask;
+    [SerializeField] private Transform _firePoint = null;
 
-    private Rigidbody2D _rigidbody2D = null;
-    private SpriteRenderer _spriteRenderer = null;
-    private Vector2 _moveDir = Vector2.zero;
-    private Vector2 _velocity = Vector2.zero;
-    private Vector3 _target = Vector3.zero;
-
-    private bool _canDash;
-    private bool _facingRight;
-
-    private void Awake()
+    protected override void Awake()
     {
-        _rigidbody2D = GetComponent<Rigidbody2D>();
-        _spriteRenderer = GetComponent<SpriteRenderer>();
+        base.Awake();
     }
 
-    private void Update()
+    protected override void Start ()
     {
-        CheckInputs();
+        base.Start();
 
-        var mousePos = Input.mousePosition;
-        mousePos.z = transform.position.z;
-
-        _target = Camera.main.ScreenToWorldPoint(mousePos);
-        _crosshair.transform.position = new Vector2(_target.x, _target.y);
+        ChangeFirePoint(new Vector3(0.0f, -0.03f, 0.0f));
     }
 
-    private void FixedUpdate()
+    protected override void Update()
     {
-        _velocity = _moveDir * _moveSpeed;
-        _rigidbody2D.velocity = _velocity;
-
-        if (_canDash)
-        {
-            Dash();
-        }
+        CheckKeysDown();
+        CheckKeysUp();
     }
 
-    private void CheckInputs ()
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+    }
+
+    private void CheckKeysDown()
     {
         if (Input.GetKey(GameController.Instance.MoveUp))
-            _moveDir.y = 1;
+        {
+            moveDirection.y = 1.0f;
+            ChangeFirePoint(new Vector3(0.0f, 0.03f, 0.0f));
+        }
+        
         if (Input.GetKey(GameController.Instance.MoveDown))
-            _moveDir.y = -1;
-
+        {
+            moveDirection.y = -1.0f;
+            ChangeFirePoint(new Vector3(0.0f, -0.03f, 0.0f));
+        }
+        
         if (Input.GetKey(GameController.Instance.MoveLeft))
         {
-            _moveDir.x = -1;
-
-            if (!_facingRight)
-            {
-                Flip();
-            }
+            moveDirection.x = -1.0f;
+            ChangeFirePoint(new Vector3(-0.03f, 0.0f, 0.0f));
         }
+        
         if (Input.GetKey(GameController.Instance.MoveRight))
         {
-            _moveDir.x = 1;
-            if (_facingRight)
-            {
-                Flip();
-            }
+            moveDirection.x = 1.0f;
+            ChangeFirePoint(new Vector3(0.03f, 0.0f, 0.0f));
         }
+    }
 
-        if (Input.GetKeyDown(GameController.Instance.Dash))
-        {
-            _canDash = true;
-        }
-
+    private void CheckKeysUp ()
+    {
         if (Input.GetKeyUp(GameController.Instance.MoveUp) || Input.GetKeyUp(GameController.Instance.MoveDown))
-            _moveDir.y = 0;
-        if (Input.GetKeyUp(GameController.Instance.MoveLeft) || Input.GetKeyUp(GameController.Instance.MoveRight))
-            _moveDir.x = 0;
-    }
-
-    private void Dash ()
-    {
-        Vector3 dashPosition = transform.position + (Vector3)(_moveDir * _dashAmount);
-        RaycastHit2D raycastHit = Physics2D.Raycast(transform.position, _moveDir, _dashAmount, _dashLayerMask);
-
-        if (raycastHit.collider != null)
         {
-            dashPosition = raycastHit.point;
+            moveDirection.y = 0.0f;
         }
 
-        _rigidbody2D.MovePosition(dashPosition);
-        _canDash = false;
+        if (Input.GetKeyUp(GameController.Instance.MoveLeft) || Input.GetKeyUp(GameController.Instance.MoveRight))
+        {
+            moveDirection.x = 0.0f;
+        }
     }
 
-    private void Flip ()
+    private void Attack ()
     {
-        _facingRight = !_facingRight;
 
-        var localScale = transform.localScale;
-        localScale.x *= -1;
-        transform.localScale = localScale;
+    }
+
+    private void SpecialAttack ()
+    {
+
+    }
+
+    private void ChangeFirePoint (Vector3 location)
+    {
+        _firePoint.localPosition = location;
     }
 }
